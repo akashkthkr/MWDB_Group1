@@ -6,6 +6,8 @@ import sys
 from termcolor import colored
 import numpy as np
 
+from constants.Constants_Phase3 import OUTPUTS_PATH
+
 ARBITRARY_CONSTANT = 0.01
 ARBITRARY_SMALL_CONSTANT = 0.000000000001
 
@@ -24,7 +26,8 @@ def get_bounds(query_vector, partitions, query_approximation, vector_approximati
     for j,vqj in enumerate(query_vector):
         pj = partitions[j]
         #number of bits in this dimension
-        bj = math.floor(b / d) + 1 if j < b % d else math.floor(b / d)
+        bj = b
+        #bj = math.floor(b / d) + 1 if j < b % d else math.floor(b / d)
         rqj_str = query_approximation[start_index:start_index+bj]
         rij_str = vector_approximation[start_index:start_index+bj]
         #converting binary string to integer for indexing of pj
@@ -155,10 +158,10 @@ def create_and_save_va_file(vectors, b, vector_ids, output_folder):
                        "compression_ratio":compression_ratio}
     print(colored(vafile_stats,'green'))
 
-    save_to_json(output_folder+"\\va_file.json",app)
-    save_to_pickle(output_folder+"\\partitions.pk",partitions)
-    save_to_pickle(output_folder+"\\vectors.pk",vectors)
-    save_to_json(output_folder+"\\vafile_stats.json",vafile_stats)
+    save_to_json(output_folder+"va_file.json",app)
+    save_to_pickle(output_folder+"partitions.pk",partitions)
+    save_to_pickle(output_folder+"vectors.pk",vectors)
+    save_to_json(output_folder+"vafile_stats.json",vafile_stats)
 
 def l_norm_similarity(vector1:np.ndarray, vector2:np.ndarray, li=2):
     assert vector1.shape == vector2.shape and vector1.ndim == 1 and li >= 1
@@ -257,6 +260,28 @@ def va_search(input_folder, query_vector, k, algorithm='va_ssa',p_in_lp=1):
         print(colored("va_noa not currently implemented", 'red'))
 
     return knn_image_ids_va
+
+def va_files_execution(train_features, test_features):
+    b = int(input("Number of bits per dimension for VA"))
+    t = int(input("Number of nearest neighbors required to query image:"))
+    image_vectors = []
+    image_ids = []
+    for image_id in train_features:
+        image_vectors.append(train_features[image_id])
+        image_ids.append(image_id)
+    image_vectors = np.asarray(image_vectors)
+
+    query_ids = []
+    query_vector = []
+    for query_id in test_features:
+        query_ids.append(query_id)
+        query_vector.append(test_features[query_id])
+    query_ids = query_ids[0]
+    query_vector = np.array(query_vector[0])
+
+    create_and_save_va_file(image_vectors,b,image_ids,OUTPUTS_PATH)
+    knn = va_search(OUTPUTS_PATH,query_vector,t,'va_ssa',p_in_lp=1)
+    return knn
 
 def main():
     b = 2
