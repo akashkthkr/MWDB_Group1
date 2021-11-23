@@ -142,15 +142,18 @@ def fetch_image(img_path):
 def fetch_features_from_image_path(img_path, model_name):
     image_id = ntpath.splitext(ntpath.basename(img_path))[0]
     new_img = fetch_image(img_path)
-    features = FeatureExtraction.get_features(new_img, model_name)
-    return image_id, new_img, features
+    img = np.array(new_img).astype(np.float)
+    GreyScaleNormalization.get_normalized_image(img)
+    features = FeatureExtraction.get_features(img, model_name)
+    return image_id, img, features
 
 
 # Data is loaded from the target folder
-def load_dataset_from_folder_old(path, model_name, image_id, query_image_path, type='.png'):
+def load_dataset_from_folder_old(path, model_name, image_id=None, query_image_path=None, type='.png'):
     dataset = {}
     # dataset['images'] = []
     # dataset['ids'] = []
+    # col_dir = path + '/*' + type
     col_dir = path + '\\*' + type
     # print(col_dir)
     for img_path in glob.glob(col_dir):
@@ -167,7 +170,7 @@ def load_dataset_from_folder_old(path, model_name, image_id, query_image_path, t
         # dataset['ids'].append(image_id)
     # dataset['images'] = np.asarray(dataset['images'])
     # dataset['ids'] = np.asarray(dataset['ids'])
-    if image_id not in dataset:
+    if image_id is not None and image_id not in dataset:
         img_id, new_image_id, features = fetch_features_from_image_path(query_image_path, model_name)
         dataset[image_id] = features
     else:

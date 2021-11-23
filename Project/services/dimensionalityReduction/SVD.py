@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-from Project.services.dimensionalityReduction import SVDLibrary
+from Project.services.dimensionalityReduction import SVDModel
 
 
 def decompose_svd(matrix, k):

@@ -60,6 +60,7 @@ class Input:
             # read transformation_matrix_file
             # multiple
         return self.hard_coded_query()
+
 feedback_algorithm = input("Relevance feedback (DT/SVM)? ")
 query_image_path = input("Path to query image: ")
 query_image = imread(query_image_path) / 255
