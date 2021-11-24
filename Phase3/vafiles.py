@@ -95,7 +95,7 @@ def get_partition_points(vector, num_partitions):
 
     #trying large value for last boundary...replace with mx=ARBIRARY_CONSTANT later if required
     last_ele = partition_points[-1]
-    partition_points.append(2*last_ele)
+    partition_points.append(last_ele+ARBITRARY_CONSTANT)
 
     return partition_points
 
@@ -122,19 +122,36 @@ def get_partitions(matrix,b):
 
 def create_approximation(vectors, partitions):
     approximations = []
+    vector_len_set = set()
+    bin_string_length = set()
     for vector in vectors:
         approximation_vector = ''
         for j,vj in enumerate(vector):
+            vector_len_set.add(len(vector))
+            if len(vector_len_set)!=1:
+                print("len_vectors=",vector_len_set)
             pj = partitions[j]
             #thresholding to make sure that the value of vector doesn't exceed the last partition. large number will be in the last partition of each dimension
             vj = min(vj,pj[-1]-ARBITRARY_SMALL_CONSTANT)
-            num_bits_in_partition = int(math.sqrt(len(pj)-1))
+            num_bits_in_partition = int(math.log(len(pj)-1,2))
+            found = False
             for i,val in enumerate(pj[:-1]):
+                if vj<val:
+                    print(colored("invalid vj --less",'red'))
+                if vj>pj[-1]:
+                    print(colored("invalid vj --more", 'red'))
                 if vj>=val and vj<pj[i+1]:
                     bin_str = get_binary_string(i,num_bits_in_partition)
-                    #print("i=",i,"bin_str=",bin_str)
+                    bin_string_length.add(len(bin_str))
+                    if len(bin_string_length)!=1:
+                        print("INVALID binary strings with unequal length created:",bin_string_length)
+                        exit(1)
                     approximation_vector+=bin_str
+                    found = True
                     break
+            if found==False:
+                print("found bucket=",found,"vj=",vj,"pj=",pj)
+                exit(1)
         print("len_approximation=",len(approximation_vector))
         approximations.append(approximation_vector)
     return approximations
@@ -241,6 +258,16 @@ def get_n_closest_images(query_vector, images_vectors, n, image_ids, p_in_lp):
     top_images = [image_ids[ind] for ind in top_features_ind]
     print('distances=',distances,"topn ids=",top_features_ind," top_n_images=",top_images)
     return top_images
+def calculate_statistics(top_k_knn, top_k_va):
+    misses = list(set(top_k_knn) - set(top_k_va))
+    print(colored("misses="+str(misses),'blue'))
+    miss_rate = len(misses)/len(top_k_knn)*100
+    print(colored("miss_rate="+str(miss_rate)+'%','green'))
+
+    false_positives = list(set(top_k_va) - set(top_k_knn))
+    print(colored("false_positives="+str(false_positives),'blue'))
+    print(colored("number of false positives="+str(len(false_positives)),'green'))
+
 
 def va_search(input_folder, query_vector, k, algorithm='va_ssa',p_in_lp=1):
     with open(input_folder+"\\va_file.json", 'rb') as json_file:
@@ -268,9 +295,12 @@ def va_search(input_folder, query_vector, k, algorithm='va_ssa',p_in_lp=1):
     elif algorithm == 'va_noa':
         print(colored("va_noa not currently implemented", 'red'))
 
+    calculate_statistics(knn_image_ids,knn_image_ids_va)
+
     return knn_image_ids_va
 
 def va_files_execution(train_features, test_features):
+
     b = int(input("Number of bits per dimension for VA"))
     t = int(input("Number of nearest neighbors required to query image:"))
     image_vectors = []
@@ -279,7 +309,7 @@ def va_files_execution(train_features, test_features):
         image_vectors.append(train_features[image_id])
         image_ids.append(image_id)
     image_vectors = np.asarray(image_vectors)
-
+    print(colored("num features per image=" + str(len(image_vectors[0])),'blue'))
     query_ids = []
     query_vector = []
     for query_id in test_features:
