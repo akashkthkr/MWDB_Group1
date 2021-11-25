@@ -27,11 +27,6 @@ class SVMUtilities():
             else:
                 tp_count = 0
 
-            if fp_count == 0 and tp_count == 0:
-                self.false_positive_rate[tag_id] = 0
-            else:
-                self.false_positive_rate[tag_id] = fp_count/(fp_count + tp_count)
-
             if tag_id in self.false_negatives:
                 fn_count = float(len(self.false_negatives[tag_id]))
             else:
@@ -41,10 +36,16 @@ class SVMUtilities():
             else:
                 tn_count = 0
 
-            if fn_count == 0 and tn_count == 0:
+            if fp_count == 0 and tn_count == 0:
+                self.false_positive_rate[tag_id] = 0
+            else:
+                self.false_positive_rate[tag_id] = fp_count/(fp_count + tn_count)
+
+
+            if fn_count == 0 and tp_count == 0:
                 self.misses_rate[tag_id] = 0
             else:
-                self.misses_rate[tag_id] = fn_count / (fn_count + tn_count)
+                self.misses_rate[tag_id] = fn_count / (fn_count + tp_count)
 
 
         self.save_file(self.false_positive_rate, f"SVM_Classifier_fpr_Task{self.task_id}.json")
