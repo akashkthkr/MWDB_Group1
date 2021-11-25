@@ -19,7 +19,7 @@ def ppr(sim_graph, images_list, query_images, max_iter=500, alpha=0.85):
     while iter < max_iter and not np.array_equal(uq_new, uq_old):
         uq_old = uq_new.copy()
         uq_new = alpha * np.matmul(sim_graph, uq_old) + \
-                 (1 - alpha) * teleport_matrix
+            (1 - alpha) * teleport_matrix
         iter += 1
     # print("Iterations: {}".format(iter))
     uq_new = uq_new.ravel()
@@ -81,6 +81,33 @@ def filter_by_Z(data):
     return result
 
 
+'''
+FP = FP/FP+TN
+FN = FN/FN+TP
+'''
+
+
+def calculate_rate(fp_data, fn_data, tp_data, tn_data):
+    fp = {}
+    fn = {}
+
+    for i in fp_data:
+        try:
+            tn = len(tn_data[i])
+        except:
+            tn = 0
+        fp[i] = len(fp_data[i]) / (len(fp_data[i]) + tn)
+
+    for i in fn_data:
+        try:
+            tp = len(tp_data[i])
+        except:
+            tp = 0
+        fn[i] = len(fn_data[i]) / (len(fn_data[i]) + tp)
+
+    return fp, fn
+
+
 def classify_by_X(image_lab, image_unlab, feat_lab, feat_unlab):
     image_list = np.concatenate((image_lab, image_unlab))
     features_list = np.concatenate((feat_lab, feat_unlab))
@@ -137,40 +164,56 @@ def classify_by_X(image_lab, image_unlab, feat_lab, feat_unlab):
         file.write(jsonString)
     print("Classification complete.")
 
-    pos = {k: 0 for k in list(labelled.keys())}
-    miss = {k: 0 for k in list(labelled.keys())}
-    tot_pos = 0
-    tot_miss = 0
-    total = 0
+    fp, fn, tp, tn = {}, {}, {}, {k: [] for k in list(labelled.keys())}
+
+    print(labels)
 
     for i in labels:
         label = i.split("-")[1]
-        total += 1
-        if (label != labels[i]):
-            miss[label] += 1
-            pos[labels[i]] += 1
-            tot_pos += 1
-            tot_miss += 1
+        result = labels[i]
+        if (label != result):
+            try:
+                fp[f"{result}"].append(i)
+            except:
+                fp[f"{result}"] = []
+                fp[f"{result}"].append(i)
 
-    for i in pos:
-        temp = str(pos[i]) + "/" + str(total)
-        pos[i] = temp
+            try:
+                fn[f"{label}"].append(i)
+            except:
+                fn[f"{label}"] = []
+                fn[f"{label}"].append(i)
+        elif(label == result):
+            try:
+                tp[f"{result}"].append(i)
+            except:
+                tp[f"{result}"] = []
+                tp[f"{result}"].append(i)
 
-    for i in miss:
-        temp = str(miss[i]) + "/" + str(total)
-        miss[i] = temp
+            for k in list(labelled.keys()):
+                tn[k].append(i)
 
-    with open(OUTPUTS_PATH + "PPR_task1_false_pos.json", "w") as file:
-        jsonString = json.dumps(pos, cls=NumpyEncoder)
+    with open(OUTPUTS_PATH + "ppr_task1_fp.json", "w") as file:
+        jsonString = json.dumps(fp)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task1_fn.json", "w") as file:
+        jsonString = json.dumps(fn)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task1_tp.json", "w") as file:
+        jsonString = json.dumps(tp)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task1_tn.json", "w") as file:
+        jsonString = json.dumps(tn)
         file.write(jsonString)
 
-    with open(OUTPUTS_PATH + "PPR_task1_miss_rates.json", "w") as file:
-        jsonString = json.dumps(miss, cls=NumpyEncoder)
-        file.write(jsonString)
+    fpr, fnr = calculate_rate(fp, fn, tp, tn)
 
-    print("False Positives - ", tot_pos)
-    print("Miss Rates - ", tot_miss)
-    print("Total images classifies - ", total)
+    with open(OUTPUTS_PATH + "ppr_task1_fpr.json", "w") as file:
+        jsonString = json.dumps(fpr)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task1_fnr.json", "w") as file:
+        jsonString = json.dumps(fnr)
+        file.write(jsonString)
 
 
 def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
@@ -229,43 +272,56 @@ def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
         file.write(jsonString)
     print("Classification complete.")
 
-    pos = {k: 0 for k in list(labelled.keys())}
-    miss = {k: 0 for k in list(labelled.keys())}
-    tot_pos = 0
-    tot_miss = 0
-    total = 0
+    fp, fn, tp, tn = {}, {}, {}, {k: [] for k in list(labelled.keys())}
+
+    print(labels)
 
     for i in labels:
         label = i.split("-")[2]
-        total += 1
-        if (label != labels[i]):
-            miss[label] += 1
-            pos[labels[i]] += 1
-            tot_pos += 1
-            tot_miss += 1
+        result = labels[i]
+        if (label != result):
+            try:
+                fp[f"{result}"].append(i)
+            except:
+                fp[f"{result}"] = []
+                fp[f"{result}"].append(i)
 
-    for i in pos:
-        temp = str(pos[i]) + "/" + str(total)
-        pos[i] = temp
+            try:
+                fn[f"{label}"].append(i)
+            except:
+                fn[f"{label}"] = []
+                fn[f"{label}"].append(i)
+        elif(label == result):
+            try:
+                tp[f"{result}"].append(i)
+            except:
+                tp[f"{result}"] = []
+                tp[f"{result}"].append(i)
 
-    for i in miss:
-        temp = str(miss[i]) + "/" + str(total)
-        miss[i] = temp
+            for k in list(labelled.keys()):
+                tn[k].append(i)
 
-    pos = {k: v for k, v in sorted(pos.items(), key=lambda item: int(item[0]))}
-    miss = {k: v for k, v in sorted(miss.items(), key=lambda item: int(item[0]))}
-
-    with open(OUTPUTS_PATH + "PPR_task2_false_pos.json", "w") as file:
-        jsonString = json.dumps(pos, cls=NumpyEncoder)
+    with open(OUTPUTS_PATH + "ppr_task2_fp.json", "w") as file:
+        jsonString = json.dumps(fp)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task2_fn.json", "w") as file:
+        jsonString = json.dumps(fn)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task2_tp.json", "w") as file:
+        jsonString = json.dumps(tp)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task2_tn.json", "w") as file:
+        jsonString = json.dumps(tn)
         file.write(jsonString)
 
-    with open(OUTPUTS_PATH + "PPR_task2_miss_rates.json", "w") as file:
-        jsonString = json.dumps(miss, cls=NumpyEncoder)
-        file.write(jsonString)
+    fpr, fnr = calculate_rate(fp, fn, tp, tn)
 
-    print("False Positives - ", tot_pos)
-    print("Miss Rates - ", tot_miss)
-    print("Total images classifies - ", total)
+    with open(OUTPUTS_PATH + "ppr_task2_fpr.json", "w") as file:
+        jsonString = json.dumps(fpr)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task2_fnr.json", "w") as file:
+        jsonString = json.dumps(fnr)
+        file.write(jsonString)
 
 
 def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
@@ -324,43 +380,56 @@ def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
         file.write(jsonString)
     print("Classification complete.")
 
-    pos = {k: 0 for k in list(labelled.keys())}
-    miss = {k: 0 for k in list(labelled.keys())}
-    tot_pos = 0
-    tot_miss = 0
-    total = 0
+    fp, fn, tp, tn = {}, {}, {}, {k: [] for k in list(labelled.keys())}
+
+    print(labels)
 
     for i in labels:
         label = i.split("-")[3]
-        total += 1
-        if (label != labels[i]):
-            miss[label] += 1
-            pos[labels[i]] += 1
-            tot_pos += 1
-            tot_miss += 1
+        result = labels[i]
+        if (label != result):
+            try:
+                fp[f"{result}"].append(i)
+            except:
+                fp[f"{result}"] = []
+                fp[f"{result}"].append(i)
 
-    for i in pos:
-        temp = str(pos[i]) + "/" + str(total)
-        pos[i] = temp
+            try:
+                fn[f"{label}"].append(i)
+            except:
+                fn[f"{label}"] = []
+                fn[f"{label}"].append(i)
+        elif(label == result):
+            try:
+                tp[f"{result}"].append(i)
+            except:
+                tp[f"{result}"] = []
+                tp[f"{result}"].append(i)
 
-    for i in miss:
-        temp = str(miss[i]) + "/" + str(total)
-        miss[i] = temp
+            for k in list(labelled.keys()):
+                tn[k].append(i)
 
-    pos = {k: v for k, v in sorted(pos.items(), key=lambda item: int(item[0]))}
-    miss = {k: v for k, v in sorted(miss.items(), key=lambda item: int(item[0]))}
-
-    with open(OUTPUTS_PATH + "PPR_task3_false_pos.json", "w") as file:
-        jsonString = json.dumps(pos, cls=NumpyEncoder)
+    with open(OUTPUTS_PATH + "ppr_task3_fp.json", "w") as file:
+        jsonString = json.dumps(fp)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task3_fn.json", "w") as file:
+        jsonString = json.dumps(fn)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task3_tp.json", "w") as file:
+        jsonString = json.dumps(tp)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task3_tn.json", "w") as file:
+        jsonString = json.dumps(tn)
         file.write(jsonString)
 
-    with open(OUTPUTS_PATH + "PPR_task3_miss_rates.json", "w") as file:
-        jsonString = json.dumps(miss, cls=NumpyEncoder)
-        file.write(jsonString)
+    fpr, fnr = calculate_rate(fp, fn, tp, tn)
 
-    print("False Positives - ", tot_pos)
-    print("Miss Rates - ", tot_miss)
-    print("Total images classified - ", total)
+    with open(OUTPUTS_PATH + "ppr_task3_fpr.json", "w") as file:
+        jsonString = json.dumps(fpr)
+        file.write(jsonString)
+    with open(OUTPUTS_PATH + "ppr_task3_fnr.json", "w") as file:
+        jsonString = json.dumps(fnr)
+        file.write(jsonString)
 
 
 def classify_using_ppr(task_id, train_features, test_features):
