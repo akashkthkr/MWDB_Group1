@@ -53,13 +53,20 @@ class SVMTask1():
                             self.true_positives[original_type_id].append(image_id)
                         else:
                             true_positive_list = [image_id]
-                            self.true_positives = {original_type_id:true_positive_list}
+                            if len(self.true_positives) == 0:
+                                self.true_positives = {original_type_id: true_positive_list}
+                            else:
+                                self.true_positives[original_type_id] = true_positive_list
                     else:
                         if original_type_id in self.false_positives:
                             self.false_positives[original_type_id].append(image_id)
                         else:
                             false_positive_list = [image_id]
-                            self.false_positives = {original_type_id: false_positive_list}
+                            if len(self.false_positives) == 0:
+                                self.false_positives = {original_type_id: false_positive_list}
+                            else:
+                                self.false_positives[original_type_id] = false_positive_list
+
                     if image_id in images_assosciation:
                         if any(original_type_id in type for type in images_assosciation[image_id]):
                             for value in images_assosciation[image_id]:
@@ -76,13 +83,20 @@ class SVMTask1():
                             self.false_negatives[original_type_id].append(image_id)
                         else:
                             false_negative_list = [image_id]
-                            self.false_negatives = {original_type_id: false_negative_list}
+                            if len(self.false_negatives) == 0:
+                                self.false_negatives = {original_type_id: false_negative_list}
+                            else:
+                                self.false_negatives[original_type_id] = false_negative_list
                     else:
                         if original_type_id in self.true_negatives:
                             self.true_negatives[original_type_id].append(image_id)
                         else:
                             true_negative_list = [image_id]
-                            self.true_negatives = {original_type_id : true_negative_list}
+                            if len(self.true_negatives) == 0:
+                                self.true_negatives = {original_type_id: true_negative_list}
+                            else:
+                                self.true_negatives[original_type_id] = true_negative_list
+
                     if image_id in negative_image_assosciation:
                         if any(original_type_id in type for type in negative_image_assosciation[image_id]):
                             for value in negative_image_assosciation[image_id]:

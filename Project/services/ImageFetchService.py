@@ -12,6 +12,8 @@ from Project.services.features import ColorMoment, LocalBinaryPattern, Histogram
 from Project.utilities import GreyScaleNormalization, MergeFeatures, ContentReader
 from matplotlib import pyplot as plt
 
+from constants.Constants_Phase3 import PATH_IDENTIFIER
+
 
 def plot_images(dataset):
     for id in dataset:
@@ -154,7 +156,7 @@ def load_dataset_from_folder_old(path, model_name, image_id=None, query_image_pa
     # dataset['images'] = []
     # dataset['ids'] = []
     # col_dir = path + '/*' + type
-    col_dir = path + '\\*' + type
+    col_dir = path + PATH_IDENTIFIER + '*' + type
     # print(col_dir)
     for img_path in glob.glob(col_dir):
         new_image_id, new_img, features = fetch_features_from_image_path(img_path, model_name)

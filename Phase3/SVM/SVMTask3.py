@@ -4,6 +4,7 @@ import json
 from numpyencoder import NumpyEncoder
 
 from Phase3.SVM.SVM import SupportVectorMachine, gaussian_kernel
+from Phase3.SVM.SVMUtilities import SVMUtilities
 from Project.services.ImageFetchService import extract_subject_id_image_type_and_second_id
 from constants.Constants_Phase3 import OUTPUTS_PATH
 
@@ -15,6 +16,7 @@ class SVMTask3():
         self.image_sample_ids_list = []
         for value in range(10):
             self.image_sample_ids_list.append(str(value + 1))
+        self.false_positives, self.false_negatives, self.true_positives, self.true_negatives = {}, {}, {}, {}
         self.task_id = task_id
 
     def execute(self):
@@ -47,6 +49,25 @@ class SVMTask3():
             index = 0
             for image_id in test_image_ids:
                 if predictions[index] == 1:
+                    if original_sample_id in image_id:
+                        if original_sample_id in self.true_positives:
+                            self.true_positives[original_sample_id].append(image_id)
+                        else:
+                            true_positive_list = [image_id]
+                            if len(self.true_positives) == 0:
+                                self.true_positives = {original_sample_id: true_positive_list}
+                            else:
+                                self.true_positives[original_sample_id] = true_positive_list
+                    else:
+                        if original_sample_id in self.false_positives:
+                            self.false_positives[original_sample_id].append(image_id)
+                        else:
+                            false_positive_list = [image_id]
+                            if len(self.false_positives) == 0:
+                                self.false_positives = {original_sample_id: false_positive_list}
+                            else:
+                                self.false_positives[original_sample_id] = false_positive_list
+
                     if image_id in images_assosciation:
                         if any(original_sample_id in type for type in images_assosciation[image_id]):
                             for value in images_assosciation[image_id]:
@@ -58,6 +79,25 @@ class SVMTask3():
                         x = {original_sample_id: prediction_values[index]}
                         images_assosciation[image_id] = [x]
                 else:
+                    if original_sample_id in image_id:
+                        if original_sample_id in self.false_negatives:
+                            self.false_negatives[original_sample_id].append(image_id)
+                        else:
+                            false_negative_list = [image_id]
+                            if len(self.false_negatives) == 0:
+                                self.false_negatives = {original_sample_id: false_negative_list}
+                            else:
+                                self.false_negatives[original_sample_id] = false_negative_list
+                    else:
+                        if original_sample_id in self.true_negatives:
+                            self.true_negatives[original_sample_id].append(image_id)
+                        else:
+                            true_negative_list = [image_id]
+                            if len(self.true_negatives) == 0:
+                                self.true_negatives = {original_sample_id: true_negative_list}
+                            else:
+                                self.true_negatives[original_sample_id] = true_negative_list
+
                     if image_id in negative_image_assosciation:
                         if any(original_sample_id in type for type in negative_image_assosciation[image_id]):
                             for value in negative_image_assosciation[image_id]:
@@ -106,4 +146,7 @@ class SVMTask3():
         jsonFile.write(jsonString)
         jsonFile.close()
 
+        svm_utilities = SVMUtilities(self.false_positives, self.true_positives, self.false_negatives,
+                                     self.true_negatives, self.image_sample_ids_list, self.task_id)
+        svm_utilities.save_fp_misses_rate()
         print(remaining_images)
