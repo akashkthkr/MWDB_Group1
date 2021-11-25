@@ -18,13 +18,13 @@ class SVMExecution:
             self.execute_task3()
 
     def execute_task1(self):
-        task1 = SVMTask1(self.train_data, self.test_data)
+        task1 = SVMTask1(self.train_data, self.test_data, self.task_id)
         task1.execute()
 
     def execute_task2(self):
-        task2 = SVMTask2(self.train_data, self.test_data)
+        task2 = SVMTask2(self.train_data, self.test_data, self.task_id)
         task2.execute()
 
     def execute_task3(self):
-        task3 = SVMTask3(self.train_data, self.test_data)
+        task3 = SVMTask3(self.train_data, self.test_data, self.task_id)
         task3.execute()

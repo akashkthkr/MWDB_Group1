@@ -1,5 +1,6 @@
 from Phase3.ExecutionService import execute_tasks
 from Phase3.FeaturesGenerator import get_features
+from constants.Constants_Phase3 import PATH_IDENTIFIER
 
 
 def user_prompt():
@@ -15,7 +16,7 @@ def user_prompt():
     else:
         query_image_id = input("Enter Query Image name:")
         query_image_path = input("Enter Query image path")
-        query_image_path = query_image_path + "\\"+query_image_id+".png"
+        query_image_path = query_image_path + PATH_IDENTIFIER +query_image_id+".png"
 
     reduction_required = input("Do you want to apply dimensionality reduction technique on extracted features: yes/no")
     if reduction_required == "yes":

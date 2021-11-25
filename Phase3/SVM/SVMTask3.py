@@ -9,12 +9,13 @@ from constants.Constants_Phase3 import OUTPUTS_PATH
 
 
 class SVMTask3():
-    def __init__(self, train_data = None, test_data = None):
+    def __init__(self, train_data = None, test_data = None, task_id = None):
         self.training_set_features = train_data
         self.test_set_features = test_data
         self.image_sample_ids_list = []
         for value in range(10):
             self.image_sample_ids_list.append(str(value + 1))
+        self.task_id = task_id
 
     def execute(self):
         images_assosciation = {}
