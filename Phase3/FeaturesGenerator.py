@@ -35,10 +35,11 @@ def get_features(task_id, feature_model, images_path, query_images_path, query_i
             dataset = load_dataset_from_folder_old(images_path, feature_model)
         if task_id == "1" or task_id == "2" or task_id == "3":
             query_images_dataset = load_dataset_from_folder_old(query_images_path, feature_model)
+            return dataset, query_images_dataset
         else:
             # In case we only want our query image
             id, img, query_images_dataset = fetch_features_from_image_path(query_image_path, feature_model)
-        return dataset, {query_image_id: query_images_dataset}
+            return dataset, {query_image_id: query_images_dataset}
 
 def get_original_features_file(features_file_name):
     features = None
