@@ -7,7 +7,7 @@ class SVMExecution:
     def __init__(self, task_id= None, train_data = None, test_data = None):
         self.task_id = task_id
         self.train_data = train_data
-        self. test_data = test_data
+        self.test_data = test_data
 
     def execute_tasks(self):
         if self.task_id == "1":

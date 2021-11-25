@@ -12,7 +12,7 @@ def user_prompt():
     images_path = input("Enter Images path")
     if task_id == "1" or task_id == "2" or task_id == "3":
         query_images_path = input("Enter query images path")
-        classifier = input("From given options, enter classifier name in same format: SVM, DTC(Decision-Tree), PPR")
+        classifier = input("From given options, enter classifier name in same format: SVM, DT(Decision-Tree), PPR")
     else:
         query_image_id = input("Enter Query Image name:")
         query_image_path = input("Enter Query image path")

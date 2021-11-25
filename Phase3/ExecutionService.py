@@ -1,4 +1,5 @@
 from Phase3.SVM.SVMExecution import SVMExecution
+from Phase3.decision_tree.decistion_tree_handler import DecisionTreeHandler
 from Phase3.vafiles import va_files_execution
 from pprc import  classify_using_ppr
 
@@ -10,9 +11,11 @@ def execute_tasks(task_id, train_features, test_features, classifier):
         svm_execution.execute_tasks()
         print("Done")
 
-    elif classifier == "DTC":
-        # TODO
-        print("Decision-Tree")
+    elif classifier == "DT":
+        print("Decision Tree to be executed")
+        decisionTreeHandler = DecisionTreeHandler(task_id, train_features, test_features)
+        decisionTreeHandler.execute()
+        print("Done")
     elif classifier == "PPR":
         classify_using_ppr(task_id,train_features,test_features)
     elif task_id == "4":
