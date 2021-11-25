@@ -2,17 +2,23 @@ import glob
 import json
 import csv
 import numpy as np
-from Phase3.FeatureGenerationUtilities import generate_file_name, get_feature_matrices, generate_features_json
+from numpyencoder import NumpyEncoder
+
+from Phase3.FeatureGenerationUtilities import generate_file_name, get_feature_matrices, generate_features_json, \
+    save_json_file, save_transformation_matrix
 from Project.services.ImageFetchService import load_dataset_from_folder_old, fetch_features_from_image_path
 from Project.services.dimensionalityReduction import ReductionModel, Transformation
+from constants import Constants_Phase3
 from constants.Constants_Phase3 import DATASETS_PATH
 
 
 def get_features(task_id, feature_model, images_path, query_images_path, query_image_id, query_image_path, reduction_required, dimensionality_reduction_model, k):
     if reduction_required == "yes":
         features_file_name, transformation_matrix_name = generate_file_name(feature_model, reduction_required, images_path, dimensionality_reduction_model, k)
-        reduced_features_json, transformation_matrix =  get_features_and_transformation_file(features_file_name, transformation_matrix_name)
+        reduced_features_json, transformation_matrix = get_features_and_transformation_file(features_file_name, transformation_matrix_name)
+        files_found = True
         if reduced_features_json == None or transformation_matrix == None:
+            files_found = False
             dataset = load_dataset_from_folder_old(images_path, feature_model)
             feature_matrix = get_feature_matrices(dataset)
             reduced_features = ReductionModel.get_features(feature_matrix, dimensionality_reduction_model, int(k))
@@ -26,6 +32,10 @@ def get_features(task_id, feature_model, images_path, query_images_path, query_i
             id, img, query_image_features = fetch_features_from_image_path(query_image_path, feature_model)
             query_image_reduced_features = {query_image_id: query_image_features}
             query_image_reduced_features = Transformation.get_latent_features(query_image_reduced_features, transformation_matrix)
+
+        if not files_found:
+            save_json_file(json.dumps(reduced_features_json, cls=NumpyEncoder), Constants_Phase3.DATASETS_PATH + features_file_name)
+            save_transformation_matrix(Constants_Phase3.DATASETS_PATH + transformation_matrix_name, transformation_matrix)
         return reduced_features_json, query_image_reduced_features
     else:
         file_name = generate_file_name(feature_model, reduction_required, images_path,
@@ -33,6 +43,7 @@ def get_features(task_id, feature_model, images_path, query_images_path, query_i
         dataset = get_original_features_file(file_name)
         if dataset == None:
             dataset = load_dataset_from_folder_old(images_path, feature_model)
+            save_json_file(json.dumps(dataset, cls=NumpyEncoder), Constants_Phase3.DATASETS_PATH + file_name)
         if task_id == "1" or task_id == "2" or task_id == "3":
             query_images_dataset = load_dataset_from_folder_old(query_images_path, feature_model)
             return dataset, query_images_dataset
