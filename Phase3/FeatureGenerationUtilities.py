@@ -34,7 +34,7 @@ def generate_file_name(feature_model, reduction_required, images_path, dimension
         transformation_matrix_name = feature_model + "_" + dimensionality_reduction_model + "_" + k + folder_name + "_transformation_matrix.csv"
         return features_file_name, transformation_matrix_name
     else:
-        file_name = feature_model + "_" + folder_name + "_features.json"
+        file_name = feature_model + folder_name + "_features.json"
         return file_name
 
 
