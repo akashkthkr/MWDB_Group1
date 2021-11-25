@@ -1,5 +1,6 @@
 from Phase3.SVM.SVMExecution import SVMExecution
 from Phase3.vafiles import va_files_execution
+from pprc import  classify_using_ppr
 
 
 def execute_tasks(task_id, train_features, test_features, classifier):
@@ -13,8 +14,7 @@ def execute_tasks(task_id, train_features, test_features, classifier):
         # TODO
         print("Decision-Tree")
     elif classifier == "PPR":
-        # TODO
-        print("PPR")
+        classify_using_ppr(task_id,train_features,test_features)
     elif task_id == "4":
         # TODO
         print("LSH Logic")
