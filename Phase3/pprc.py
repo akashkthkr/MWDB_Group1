@@ -19,7 +19,7 @@ def ppr(sim_graph, images_list, query_images, max_iter=500, alpha=0.85):
     while iter < max_iter and not np.array_equal(uq_new, uq_old):
         uq_old = uq_new.copy()
         uq_new = alpha * np.matmul(sim_graph, uq_old) + \
-            (1 - alpha) * teleport_matrix
+                 (1 - alpha) * teleport_matrix
         iter += 1
     # print("Iterations: {}".format(iter))
     uq_new = uq_new.ravel()
@@ -41,38 +41,42 @@ def ppr(sim_graph, images_list, query_images, max_iter=500, alpha=0.85):
 
 def filter_by_X(data):
     result = {}
-    types = ["cc", "con", "emboss", "jitter", "neg", "noise01", "noise02",
-             "original", "poster", "rot", "smooth", "stipple"]
-    for i in types:
-        result[f"{i}"] = []
 
     for item in data:
         label = item.split('-')[1]
-        result[f"{label}"].append(item)
+        try:
+            result[f"{label}"].append(item)
+        except:
+            result[f"{label}"] = []
+            result[f"{label}"].append(item)
 
     return result
 
 
 def filter_by_Y(data):
     result = {}
-    for i in range(1, 41):
-        result[f"{i}"] = []
 
     for item in data:
         label = item.split('-')[2]
-        result[f"{label}"].append(item)
+        try:
+            result[f"{label}"].append(item)
+        except:
+            result[f"{label}"] = []
+            result[f"{label}"].append(item)
 
     return result
 
 
 def filter_by_Z(data):
     result = {}
-    for i in range(1, 11):
-        result[f"{i}"] = []
 
     for item in data:
         label = item.split('-')[3]
-        result[f"{label}"].append(item)
+        try:
+            result[f"{label}"].append(item)
+        except:
+            result[f"{label}"] = []
+            result[f"{label}"].append(item)
 
     return result
 
@@ -106,11 +110,9 @@ def classify_by_X(image_lab, image_unlab, feat_lab, feat_unlab):
 
     print("Classification started...")
     ranks = {}
-    types = ["cc", "con", "emboss", "jitter", "neg", "noise01", "noise02",
-             "original", "poster", "rot", "smooth", "stipple"]
     for img in image_unlab:
         temp = {}
-        for i in types:
+        for i in list(labelled.keys()):
             temp[f"{i}"] = ppr_dict[f"{i}"][img]
         ranks[img] = temp
 
@@ -135,16 +137,20 @@ def classify_by_X(image_lab, image_unlab, feat_lab, feat_unlab):
         file.write(jsonString)
     print("Classification complete.")
 
-    pos = {k: 0 for k in types}
-    miss = {k: 0 for k in types}
+    pos = {k: 0 for k in list(labelled.keys())}
+    miss = {k: 0 for k in list(labelled.keys())}
+    tot_pos = 0
+    tot_miss = 0
     total = 0
 
     for i in labels:
         label = i.split("-")[1]
         total += 1
-        if(label != labels[i]):
+        if (label != labels[i]):
             miss[label] += 1
             pos[labels[i]] += 1
+            tot_pos += 1
+            tot_miss += 1
 
     for i in pos:
         temp = str(pos[i]) + "/" + str(total)
@@ -162,8 +168,9 @@ def classify_by_X(image_lab, image_unlab, feat_lab, feat_unlab):
         jsonString = json.dumps(miss, cls=NumpyEncoder)
         file.write(jsonString)
 
-    print("False Positives - ", pos)
-    print("Miss Rates - ", miss)
+    print("False Positives - ", tot_pos)
+    print("Miss Rates - ", tot_miss)
+    print("Total images classifies - ", total)
 
 
 def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
@@ -197,7 +204,7 @@ def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
     ranks = {}
     for img in image_unlab:
         temp = {}
-        for i in range(1, 41):
+        for i in list(labelled.keys()):
             temp[f"{i}"] = ppr_dict[f"{i}"][img]
         ranks[img] = temp
 
@@ -222,16 +229,20 @@ def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
         file.write(jsonString)
     print("Classification complete.")
 
-    pos = {k: 0 for k in range(1, 41)}
-    miss = {k: 0 for k in range(1, 41)}
+    pos = {k: 0 for k in list(labelled.keys())}
+    miss = {k: 0 for k in list(labelled.keys())}
+    tot_pos = 0
+    tot_miss = 0
     total = 0
 
     for i in labels:
         label = i.split("-")[2]
         total += 1
-        if(label != labels[i]):
+        if (label != labels[i]):
             miss[label] += 1
             pos[labels[i]] += 1
+            tot_pos += 1
+            tot_miss += 1
 
     for i in pos:
         temp = str(pos[i]) + "/" + str(total)
@@ -241,6 +252,9 @@ def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
         temp = str(miss[i]) + "/" + str(total)
         miss[i] = temp
 
+    pos = {k: v for k, v in sorted(pos.items(), key=lambda item: int(item[0]))}
+    miss = {k: v for k, v in sorted(miss.items(), key=lambda item: int(item[0]))}
+
     with open(OUTPUTS_PATH + "PPR_task2_false_pos.json", "w") as file:
         jsonString = json.dumps(pos, cls=NumpyEncoder)
         file.write(jsonString)
@@ -249,8 +263,9 @@ def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
         jsonString = json.dumps(miss, cls=NumpyEncoder)
         file.write(jsonString)
 
-    print("False Positives - ", pos)
-    print("Miss Rates - ", miss)
+    print("False Positives - ", tot_pos)
+    print("Miss Rates - ", tot_miss)
+    print("Total images classifies - ", total)
 
 
 def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
@@ -284,7 +299,7 @@ def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
     ranks = {}
     for img in image_unlab:
         temp = {}
-        for i in range(1, 11):
+        for i in list(labelled.keys()):
             temp[f"{i}"] = ppr_dict[f"{i}"][img]
         ranks[img] = temp
 
@@ -309,16 +324,20 @@ def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
         file.write(jsonString)
     print("Classification complete.")
 
-    pos = {k: 0 for k in range(1, 11)}
-    miss = {k: 0 for k in range(1, 11)}
+    pos = {k: 0 for k in list(labelled.keys())}
+    miss = {k: 0 for k in list(labelled.keys())}
+    tot_pos = 0
+    tot_miss = 0
     total = 0
 
     for i in labels:
         label = i.split("-")[3]
         total += 1
-        if(label != labels[i]):
+        if (label != labels[i]):
             miss[label] += 1
             pos[labels[i]] += 1
+            tot_pos += 1
+            tot_miss += 1
 
     for i in pos:
         temp = str(pos[i]) + "/" + str(total)
@@ -328,6 +347,9 @@ def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
         temp = str(miss[i]) + "/" + str(total)
         miss[i] = temp
 
+    pos = {k: v for k, v in sorted(pos.items(), key=lambda item: int(item[0]))}
+    miss = {k: v for k, v in sorted(miss.items(), key=lambda item: int(item[0]))}
+
     with open(OUTPUTS_PATH + "PPR_task3_false_pos.json", "w") as file:
         jsonString = json.dumps(pos, cls=NumpyEncoder)
         file.write(jsonString)
@@ -336,8 +358,9 @@ def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
         jsonString = json.dumps(miss, cls=NumpyEncoder)
         file.write(jsonString)
 
-    print("False Positives - ", pos)
-    print("Miss Rates - ", miss)
+    print("False Positives - ", tot_pos)
+    print("Miss Rates - ", tot_miss)
+    print("Total images classified - ", total)
 
 
 def classify_using_ppr(task_id, train_features, test_features):
@@ -354,11 +377,11 @@ def classify_using_ppr(task_id, train_features, test_features):
 
     # print(type(features_lab))
 
-    if(task_id == '1'):
+    if (task_id == '1'):
         classify_by_X(image_lab, image_unlab, features_lab, features_unlab)
-    elif(task_id == '2'):
+    elif (task_id == '2'):
         classify_by_Y(image_lab, image_unlab, features_lab, features_unlab)
-    elif(task_id == '3'):
+    elif (task_id == '3'):
         classify_by_Z(image_lab, image_unlab, features_lab, features_unlab)
 
     print("Total time taken - " + str(time.time() - start) + " seconds.")
