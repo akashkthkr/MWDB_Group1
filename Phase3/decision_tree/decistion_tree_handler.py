@@ -1,4 +1,5 @@
 import numpy
+<<<<<<< HEAD
 import json
 from numpyencoder import NumpyEncoder
 from Phase3.decision_tree.decision_tree3 import DecisionTree
@@ -7,6 +8,9 @@ from constants.Constants_Phase3 import OUTPUTS_PATH
 from sklearn import tree
 from Phase3.SVM.SVMUtilities import SVMUtilities
 
+from decision_tree.decision_tree import DecisionTreeClassifier
+from Project.services.ImageFetchService import extract_subject_id_image_type_and_second_id
+from sklearn import tree
 
 
 TASK_LABEL_MAPPING = {
@@ -236,8 +240,8 @@ class DecisionTreeHandler:
         test_images = list(self.test_data.keys())
         predicted_data = {test_images[index]: result for index, result in enumerate(results)}
         original_data = {image: self.get_label_from_image(image) for image in test_images}
-        print("original data:: {}".format(original_data))
-        print("predicetd data:: {}".format(predicted_data))
+        # print("original data:: {}".format(original_data))
+        # print("predicetd data:: {}".format(predicted_data))
         for image, label in predicted_data.items():
             original_label = original_data.get(image, None)
             if original_label != label:
