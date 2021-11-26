@@ -49,14 +49,15 @@ $ python lsh.py
     Enter the ImageId: <image_id>
     Enter the value of t: <task_number>
 '''
-import os
 import sys
-
-
+import json
+import pickle
 from pathlib import Path
-import misc
+from constants.Constants_Phase3 import OUTPUTS_PATH
 import os
 import numpy as np
+from termcolor import colored
+
 wind_size = 5
 offset = np.random.randint(wind_size)
 
@@ -64,7 +65,7 @@ offset = np.random.randint(wind_size)
 def euclidean_dist_square(x, y):
     x = np.array(x)
     y = np.array(y)
-    return np.linalg.norm(x-y)
+    return np.linalg.norm(x - y)
 
 
 class Lsh(object):
@@ -88,7 +89,8 @@ class Lsh(object):
     def add_to_index_structure(self, input_feature, image_id=''):
         value = tuple(input_feature)
         for i, layer in enumerate(self.layers):
-            layer.setdefault(self.get_combined_hash_value(self.random_planes[i], input_feature, 0), []).append((value, image_id))
+            layer.setdefault(self.get_combined_hash_value(self.random_planes[i], input_feature, 0), []).append(
+                (value, image_id))
 
     def query(self, feature, num_results=None, distance_func=None):
         image_hits = set()
@@ -97,27 +99,38 @@ class Lsh(object):
         for i, layer in enumerate(self.layers):
             combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature, 0)
             image_hits.update(layer.get(combined_hash_value, []))
-        j=1
+        j = 1
 
-        while len(image_hits)<num_results:
+        while len(image_hits) < num_results:
             for i, layer in enumerate(self.layers):
                 combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature, j)
                 image_hits.update(layer.get(combined_hash_value, []))
-                combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature, 0-j)
+                combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature, 0 - j)
                 image_hits.update(layer.get(combined_hash_value, []))
                 # print(len(image_hits))
-            j+=1
-        # image_hits = [(hit_tuple[0], hit_tuple[1], calculate_distance(feature, np.asarray(hit_tuple[0])))
-        #               for hit_tuple in image_hits]
-        image_hits = [(os.path.join('../data/Hands', hit_tuple[1]),
-                       calculate_distance(feature, hit_tuple[0])) for hit_tuple in image_hits]
-        image_hits.sort(key=lambda v: v[1])
-        
-        result = image_hits[:num_results] if num_results else image_hits
+            j += 1
 
+        image_hits = [(hit_tuple[1], calculate_distance(feature, np.asarray(hit_tuple[0])))
+                      for hit_tuple in image_hits]
+        image_hits.sort(key=lambda v: v[1])
+
+        result = image_hits[:num_results] if num_results else image_hits
         return result, len(image_hits), len(set(image_hits))
 
+    def save_to_json(filename, object_to_store):
+        with open(filename, 'w') as json_file:
+            json.dump(object_to_store, json_file)
+
+    def save_to_pickle(filename, object_to_store):
+        with open(filename, 'wb') as pickle_file:
+            pickle.dump(object_to_store, pickle_file)
+
     def save_result(self, result):
+        output_folder = OUTPUTS_PATH
         reduced_pickle_file_folder = os.path.join(Path(os.path.dirname(__file__)).parent,
-                                                       'Phase2', 'pickle_files')
-        misc.save2pickle(result, reduced_pickle_file_folder, 'Task_4_Result')
+                                                  OUTPUTS_PATH, 'pickle_files')
+
+        self.save_to_pickle(output_folder + "partitions.pk", reduced_pickle_file_folder)
+        self.save_to_json(output_folder + "lsh_data.json", result)
+# image_hits = [(os.path.join(OUTPUTS_PATH, hit_tuple[1]),
+#                calculate_distance(feature, hit_tuple[0])) for hit_tuple in image_hits]
