@@ -42,24 +42,12 @@ Number of buckets searched as well as unique overall number of images considered
 False positive and miss rates
 '''
 
-'''Running the code:
-$ python lsh.py
-    Enter the number of Layers: <number>
-    Enter the number of Hashes per layer: <number>
-    Enter the ImageId: <image_id>
-    Enter the value of t: <task_number>
-'''
-import sys
 import json
 import pickle
 from pathlib import Path
 from constants.Constants_Phase3 import OUTPUTS_PATH
 import os
 import numpy as np
-from termcolor import colored
-
-wind_size = 5
-offset = np.random.randint(wind_size)
 
 
 def euclidean_dist_square(x, y):
@@ -78,36 +66,32 @@ class Lsh(object):
                               for _ in range(self.num_layers)]
         self.layers = [dict() for i in range(self.num_layers)]
 
-    def get_combined_hash_value(self, planes, input_point, j):
+    def get_combined_hash_value(self, planes, input_point):
         input_point = np.array(input_point)
         projections = planes.dot(input_point)
-        # projections = projections/50
-        # val= "".join([str(int(i)+j) for i in projections])
-        # return val
         return "".join(['1' if i > 0 else '0' for i in projections])
 
     def add_to_index_structure(self, input_feature, image_id=''):
         value = tuple(input_feature)
         for i, layer in enumerate(self.layers):
-            layer.setdefault(self.get_combined_hash_value(self.random_planes[i], input_feature, 0), []).append(
+            layer.setdefault(self.get_combined_hash_value(self.random_planes[i], input_feature), []).append(
                 (value, image_id))
 
-    def query(self, feature, num_results=None, distance_func=None):
+    def query(self, feature, num_results=None):
         image_hits = set()
         calculate_distance = euclidean_dist_square
 
         for i, layer in enumerate(self.layers):
-            combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature, 0)
+            combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature)
             image_hits.update(layer.get(combined_hash_value, []))
         j = 1
 
         while len(image_hits) < num_results:
             for i, layer in enumerate(self.layers):
-                combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature, j)
+                combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature)
                 image_hits.update(layer.get(combined_hash_value, []))
-                combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature, 0 - j)
+                combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature)
                 image_hits.update(layer.get(combined_hash_value, []))
-                # print(len(image_hits))
             j += 1
 
         image_hits = [(hit_tuple[1], calculate_distance(feature, np.asarray(hit_tuple[0])))
@@ -117,20 +101,14 @@ class Lsh(object):
         result = image_hits[:num_results] if num_results else image_hits
         return result, len(image_hits), len(set(image_hits))
 
-    def save_to_json(filename, object_to_store):
+    def save_to_json(self, filename, object_to_store):
         with open(filename, 'w') as json_file:
             json.dump(object_to_store, json_file)
 
-    def save_to_pickle(filename, object_to_store):
+    def save_to_pickle(self, filename, object_to_store):
         with open(filename, 'wb') as pickle_file:
             pickle.dump(object_to_store, pickle_file)
 
     def save_result(self, result):
         output_folder = OUTPUTS_PATH
-        reduced_pickle_file_folder = os.path.join(Path(os.path.dirname(__file__)).parent,
-                                                  OUTPUTS_PATH, 'pickle_files')
-
-        self.save_to_pickle(output_folder + "partitions.pk", reduced_pickle_file_folder)
         self.save_to_json(output_folder + "lsh_data.json", result)
-# image_hits = [(os.path.join(OUTPUTS_PATH, hit_tuple[1]),
-#                calculate_distance(feature, hit_tuple[0])) for hit_tuple in image_hits]
