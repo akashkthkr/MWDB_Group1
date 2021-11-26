@@ -40,7 +40,6 @@ class SVMTask3():
             test_image_ids, test_set_X = [], []
 
             for image_id in self.test_set_features:
-                subject_id, type_id, image_sample_id = extract_subject_id_image_type_and_second_id(image_id)
                 test_image_ids.append(image_id)
                 test_set_X.append(self.test_set_features[image_id])
             clf.fit(np.array(training_set_X), np.array(training_set_Y))
@@ -48,8 +47,9 @@ class SVMTask3():
 
             index = 0
             for image_id in test_image_ids:
+                subject_id, type_id, image_sample_id = extract_subject_id_image_type_and_second_id(image_id)
                 if predictions[index] == 1:
-                    if original_sample_id in image_id:
+                    if original_sample_id == image_sample_id:
                         if original_sample_id in self.true_positives:
                             self.true_positives[original_sample_id].append(image_id)
                         else:
@@ -79,7 +79,7 @@ class SVMTask3():
                         x = {original_sample_id: prediction_values[index]}
                         images_assosciation[image_id] = [x]
                 else:
-                    if original_sample_id in image_id:
+                    if original_sample_id == image_sample_id:
                         if original_sample_id in self.false_negatives:
                             self.false_negatives[original_sample_id].append(image_id)
                         else:

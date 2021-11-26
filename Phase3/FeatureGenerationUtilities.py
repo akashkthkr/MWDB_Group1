@@ -22,7 +22,7 @@ def generate_features_json(dataset, reduced_features):
     index = 0
     for image_id in dataset:
         float_list = [float(value) for value in reduced_features[index]]
-        float_list.sort(reverse=True)
+        # float_list.sort(reverse=True)
         features_json[image_id] = float_list
         index = index + 1
     return features_json
