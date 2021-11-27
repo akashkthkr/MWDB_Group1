@@ -76,7 +76,7 @@ def get_partition_points(vector, num_partitions):
                                               for i in range(int(num_partitions))])
     print("num_points_per_partition=",num_points_per_partition_list)
 
-    # first partition point is Zero, last partition point is max value in vector + 5
+    # first partition point is min-5, last partition point is max value in vector + 5
     # ARBIRARARY_CONSTANT added so that the last point is not at the boundary and is atleast within a certain distance of the partition boundary
     # partition point is kept as mid point of last point of nth partition and first point of n+1th partition
     # running sum of number of points per partition maintained to index points in these partitions
@@ -219,7 +219,8 @@ class Candidate_VA_SSA:
 
 
 def va_ssa(va, v, qa, q, k, partitions, v_ids, p):
-    total_buckets_in_partitions = np.sum([len(partition) for partition in partitions])
+    buckets_searched = set()
+
     total_images_in_database = len(v)
 
     num_images_considered = 0
@@ -227,15 +228,16 @@ def va_ssa(va, v, qa, q, k, partitions, v_ids, p):
     candidate_obj = Candidate_VA_SSA(k)
     d = candidate_obj.init_candidate()
     for i, vai in enumerate(va):
+        #buckets_searched.add(vai)
         li, _ = get_bounds(q, partitions, qa, vai, p)
-        num_buckets_searched += total_buckets_in_partitions
+        #buckets_searched.add(li)
         if li < d:
+            buckets_searched.add(vai)
             num_images_considered += 1
             lvivq = l_norm_similarity(np.array(v[i]), np.array(q))
             d = candidate_obj.candidate(lvivq, i)
     top_k_indexes = candidate_obj.get_indexes()
-
-    print(colored("Total buckets in all partitions:"+str(total_buckets_in_partitions),'blue'))
+    num_buckets_searched = len(buckets_searched)
     print(colored('Total images in database:'+str(total_images_in_database),'blue'))
     deliverable = {"number of buckets searched":num_buckets_searched,
                    "number of images visited":num_images_considered,
@@ -258,6 +260,7 @@ def get_n_closest_images(query_vector, images_vectors, n, image_ids, p_in_lp):
     top_images = [image_ids[ind] for ind in top_features_ind]
     print('distances=',distances,"topn ids=",top_features_ind," top_n_images=",top_images)
     return top_images
+
 def calculate_statistics(top_k_knn, top_k_va):
     misses = list(set(top_k_knn) - set(top_k_va))
     print(colored("misses="+str(misses),'blue'))
@@ -319,7 +322,7 @@ def va_files_execution(train_features, test_features):
     query_vector = np.array(query_vector[0])
 
     create_and_save_va_file(image_vectors,b,image_ids,OUTPUTS_PATH)
-    knn = va_search(OUTPUTS_PATH,query_vector,t,'va_ssa',p_in_lp=1)
+    knn = va_search(OUTPUTS_PATH,query_vector,t,'va_ssa',p_in_lp=2)
     return knn
 
 def main():
