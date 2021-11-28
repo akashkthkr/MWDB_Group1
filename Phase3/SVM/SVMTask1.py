@@ -145,6 +145,6 @@ class SVMTask1():
         jsonFile.write(jsonString)
         jsonFile.close()
 
-        svm_utilities = SVMUtilities(self.false_positives, self.true_positives, self.false_negatives, self.true_negatives, self.type_ids_list, self.task_id)
+        svm_utilities = SVMUtilities(self.false_positives, self.true_positives, self.false_negatives, self.true_negatives, self.type_ids_list, self.task_id, self.test_set_features, classifier_results)
         svm_utilities.save_fp_misses_rate()
         print(remaining_images)
