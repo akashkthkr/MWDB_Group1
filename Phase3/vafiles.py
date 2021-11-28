@@ -76,7 +76,7 @@ def get_partition_points(vector, num_partitions):
                                               for i in range(int(num_partitions))])
     print("num_points_per_partition=",num_points_per_partition_list)
 
-    # first partition point is Zero, last partition point is max value in vector + 5
+    # first partition point is min-5, last partition point is max value in vector + 5
     # ARBIRARARY_CONSTANT added so that the last point is not at the boundary and is atleast within a certain distance of the partition boundary
     # partition point is kept as mid point of last point of nth partition and first point of n+1th partition
     # running sum of number of points per partition maintained to index points in these partitions
@@ -152,8 +152,8 @@ def create_approximation(vectors, partitions):
             if found==False:
                 print("found bucket=",found,"vj=",vj,"pj=",pj)
                 exit(1)
-        print("len_approximation=",len(approximation_vector))
         approximations.append(approximation_vector)
+    print("len_approximation=", len(approximations[0]))
     return approximations
 
 def save_to_json(filename, object_to_store):
@@ -177,16 +177,19 @@ def create_and_save_va_file(vectors, b, vector_ids, output_folder):
 
     # create dicts so that json serializable
     app = {'approximations':approximations, 'vector_ids':vector_ids}
+
     vafile_stats = {"va_file_size":vafile_size,
                        "meta_data_size":vafile_metadata_size,
                         "original_vectors_size=":original_size,
                        "compression_ratio":compression_ratio}
+    num_dim = len(vectors[0])
+    approximation_len = len(approximations[0])
+    output_filename = "vafile_stats_"+str(num_dim)+"_"+str(approximation_len)+".json"
     print(colored(vafile_stats,'green'))
-
     save_to_json(output_folder+"va_file.json",app)
     save_to_pickle(output_folder+"partitions.pk",partitions)
     save_to_pickle(output_folder+"vectors.pk",vectors)
-    save_to_json(output_folder+"vafile_stats.json",vafile_stats)
+    save_to_json(output_folder+output_filename,vafile_stats)
 
 def l_norm_similarity(vector1:np.ndarray, vector2:np.ndarray, li=2):
     assert vector1.shape == vector2.shape and vector1.ndim == 1 and li >= 1
@@ -219,34 +222,50 @@ class Candidate_VA_SSA:
 
 
 def va_ssa(va, v, qa, q, k, partitions, v_ids, p):
-    total_buckets_in_partitions = np.sum([len(partition) for partition in partitions])
+    buckets_searched = set()
     total_images_in_database = len(v)
+    num_buckets = 0
+    #for partition in partitions:
+    try:
+        num_buckets = math.pow(len(partitions[0])-1, len(partitions))
+    except OverflowError:
+        num_buckets = float('inf')
 
     num_images_considered = 0
-    num_buckets_searched = 0
+    buckets_having_elements = set()
     candidate_obj = Candidate_VA_SSA(k)
     d = candidate_obj.init_candidate()
     for i, vai in enumerate(va):
+        buckets_having_elements.add(vai)
         li, _ = get_bounds(q, partitions, qa, vai, p)
-        num_buckets_searched += total_buckets_in_partitions
+        #buckets_searched.add(li)
         if li < d:
+            buckets_searched.add(vai)
             num_images_considered += 1
             lvivq = l_norm_similarity(np.array(v[i]), np.array(q))
             d = candidate_obj.candidate(lvivq, i)
     top_k_indexes = candidate_obj.get_indexes()
-
-    print(colored("Total buckets in all partitions:"+str(total_buckets_in_partitions),'blue'))
-    print(colored('Total images in database:'+str(total_images_in_database),'blue'))
-    deliverable = {"number of buckets searched":num_buckets_searched,
-                   "number of images visited":num_images_considered,
-                   "number of unique images visited":num_images_considered}
-    print(colored(deliverable,'green'))
+    num_buckets_searched = len(buckets_searched)
     comparisons_saved = total_images_in_database-num_images_considered
     percentage_compairsons_saved = comparisons_saved/total_images_in_database*100
     print(colored('Total image comparisons saved with va files:'+str(comparisons_saved)+
                   "--- i.e. "+str(percentage_compairsons_saved)+"% images not visited",'blue'))
+    deliverable = {"total images in database":total_images_in_database,
+                   "number of buckets":num_buckets,
+                   "num of buckets having images":len(buckets_having_elements),
+                   "number of buckets searched":num_buckets_searched,
+                   "number of images visited":num_images_considered,
+                   "number of unique images visited":num_images_considered,
+                   "percentage comparisons saved":percentage_compairsons_saved}
+    print(colored(deliverable,'green'))
+
+    num_dim = len(q)
+    approximation_len = len(qa)
+    output_filename = "va_query_stats"+"_"+str(num_dim)+"_"+str(approximation_len)+".json"
+    save_to_json(OUTPUTS_PATH+output_filename,deliverable)
+
     v_ids = np.array(v_ids,dtype=str)
-    return v_ids[top_k_indexes]
+    return v_ids[top_k_indexes], num_images_considered
 
 def va_noa(va, v, qa, q, k, v_ids):
     pass
@@ -256,17 +275,20 @@ def get_n_closest_images(query_vector, images_vectors, n, image_ids, p_in_lp):
     top_features_ind = distances.argsort()[:n]
     print("top_features_ind=",top_features_ind)
     top_images = [image_ids[ind] for ind in top_features_ind]
-    print('distances=',distances,"topn ids=",top_features_ind," top_n_images=",top_images)
+    print("topn ids=",top_features_ind," top_n_images=",top_images)
     return top_images
-def calculate_statistics(top_k_knn, top_k_va):
+
+def calculate_statistics(top_k_knn, top_k_va, num_images_considered):
+    correct_images = list(set(top_k_va).intersection(top_k_knn))
+    print(colored("correct_knn_va="+str(correct_images),'blue'))
+    miss_rate = (len(top_k_knn) - len(correct_images))/len(top_k_knn)*100
     misses = list(set(top_k_knn) - set(top_k_va))
     print(colored("misses="+str(misses),'blue'))
-    miss_rate = len(misses)/len(top_k_knn)*100
     print(colored("miss_rate="+str(miss_rate)+'%','green'))
 
-    false_positives = list(set(top_k_va) - set(top_k_knn))
-    print(colored("false_positives="+str(false_positives),'blue'))
-    print(colored("number of false positives="+str(len(false_positives)),'green'))
+    false_positive_rate = (num_images_considered-len(correct_images))/num_images_considered*100
+    print(colored("false_positive_rate="+str(false_positive_rate)+'%','green'))
+    return miss_rate,false_positive_rate
 
 
 def va_search(input_folder, query_vector, k, algorithm='va_ssa',p_in_lp=1):
@@ -286,16 +308,22 @@ def va_search(input_folder, query_vector, k, algorithm='va_ssa',p_in_lp=1):
     print("query approximation=",query_approximation)
 
     knn_image_ids_va = []
+    num_images_considered = 0
     if algorithm == 'va_ssa':
         print(colored("va_ssa",'blue'))
-        knn_image_ids_va = va_ssa(approximations, vectors, query_approximation, query_vector,k,partitions,vector_ids,p_in_lp)
+        knn_image_ids_va, num_images_considered = va_ssa(approximations, vectors, query_approximation, query_vector,k,partitions,vector_ids,p_in_lp)
         deliverable = {'top_k_va_files':list(knn_image_ids_va),"top_k_knn":knn_image_ids}
         print(colored(deliverable,'blue'))
 
     elif algorithm == 'va_noa':
         print(colored("va_noa not currently implemented", 'red'))
 
-    calculate_statistics(knn_image_ids,knn_image_ids_va)
+    miss_rate, false_positive_rate = calculate_statistics(knn_image_ids,knn_image_ids_va, num_images_considered)
+    statistics = {'miss_rate': miss_rate, "false_positive_rate": false_positive_rate}
+    num_dim = len(query_vector)
+    approximation_len = len(query_approximation)
+    output_filename = "va_miss_fp"+"_"+str(num_dim)+"_"+str(approximation_len)+".json"
+    save_to_json(OUTPUTS_PATH+output_filename,statistics)
 
     return knn_image_ids_va
 
@@ -303,23 +331,26 @@ def va_files_execution(train_features, test_features):
 
     b = int(input("Number of bits per dimension for VA"))
     t = int(input("Number of nearest neighbors required to query image:"))
-    image_vectors = []
-    image_ids = []
-    for image_id in train_features:
-        image_vectors.append(train_features[image_id])
-        image_ids.append(image_id)
-    image_vectors = np.asarray(image_vectors)
-    print(colored("num features per image=" + str(len(image_vectors[0])),'blue'))
-    query_ids = []
-    query_vector = []
-    for query_id in test_features:
-        query_ids.append(query_id)
-        query_vector.append(test_features[query_id])
-    query_ids = query_ids[0]
-    query_vector = np.array(query_vector[0])
+    # knn = []
+    # t = 10
+    for b in range(b,b+1):
+        image_vectors = []
+        image_ids = []
+        for image_id in train_features:
+            image_vectors.append(train_features[image_id])
+            image_ids.append(image_id)
+        image_vectors = np.asarray(image_vectors)
+        print(colored("num features per image=" + str(len(image_vectors[0])),'blue'))
+        query_ids = []
+        query_vector = []
+        for query_id in test_features:
+            query_ids.append(query_id)
+            query_vector.append(test_features[query_id])
+        query_ids = query_ids[0]
+        query_vector = np.array(query_vector[0])
 
-    create_and_save_va_file(image_vectors,b,image_ids,OUTPUTS_PATH)
-    knn = va_search(OUTPUTS_PATH,query_vector,t,'va_ssa',p_in_lp=1)
+        create_and_save_va_file(image_vectors,b,image_ids,OUTPUTS_PATH)
+        knn = va_search(OUTPUTS_PATH,query_vector,t,'va_ssa',p_in_lp=2)
     return knn
 
 def main():
