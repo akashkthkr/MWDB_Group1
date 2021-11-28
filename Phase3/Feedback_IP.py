@@ -1,5 +1,6 @@
 import Phase3.Feedback as Feedback
 from Phase3.SVM.SVM import SupportVectorMachine
+from Phase3.decision_tree import decision_tree
 import collections
 
 def execute_flow(ip_features,query_feature,result_ids):
@@ -42,10 +43,11 @@ def execute_flow(ip_features,query_feature,result_ids):
     if classifier == 'DT':
     # TODO: use generated input data and relabel the images
         print("Classify entire database with relevant/irrelevant feedback")
-        #dt = DT(10)
-        #dt.fit(fb.X,fb.Y)
-        #for id,feature in ip_features:
-        #    Labelled_Dataset[id] = dt.predict(feature)
+        dt = decision_tree.DecisionTreeClassifier()
+        X_list = list(fb.X)
+        dt.fit(X_list,Y)
+        for id,feature in ip_features:
+            Labelled_Dataset[id] = dt.predict(feature)
 
 
     elif classifier == 'SVM':
