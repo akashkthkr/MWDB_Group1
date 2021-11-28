@@ -6,8 +6,6 @@ from constants.Constants_Phase3 import PATH_IDENTIFIER
 def user_prompt():
     dimensionality_reduction_model, k, query_image_id, query_images_path, query_image_path, classifier = None, None, None, None, None, None
     task_id = input("Enter task number from 1 to 8=")
-    if task_id == "8":
-        return task_id, None, None, None, None, None, None, None, None, None
     feature_model = input("From given options, enter model name in same format: CM, ELBP, HOG=")
     images_path = input("Enter Images path=")
     if task_id == "1" or task_id == "2" or task_id == "3":
@@ -30,6 +28,6 @@ if __name__ == '__main__':
     task_id, classifier, feature_model, images_path, query_images_path, query_image_id, query_image_path, reduction_required, dimensionality_reduction_model, k = user_prompt()
     # generate_features(images_path)
     train_features, test_features = None, None
-    if task_id != "8":
-        train_features, test_features = get_features(task_id, feature_model, images_path, query_images_path, query_image_id, query_image_path, reduction_required, dimensionality_reduction_model, k)
+    #if task_id != "8":
+    train_features, test_features = get_features(task_id, feature_model, images_path, query_images_path, query_image_id, query_image_path, reduction_required, dimensionality_reduction_model, k)
     execute_tasks(task_id, train_features, test_features, classifier)

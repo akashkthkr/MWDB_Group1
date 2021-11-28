@@ -3,6 +3,7 @@ from Phase3.SVM.SVMExecution import SVMExecution
 from Phase3.decision_tree.decistion_tree_handler import DecisionTreeHandler
 from Phase3.vafiles import va_files_execution
 from pprc import  classify_using_ppr
+from Phase3.Feedback_IP import execute_flow
 
 
 def execute_tasks(task_id, train_features, test_features, classifier):
@@ -32,12 +33,14 @@ def execute_tasks(task_id, train_features, test_features, classifier):
         knn = va_files_execution(train_features, test_features)
         print("KNN using VA files = ", knn)
         print("Done!!")
-    elif task_id == "6":
-        # TODO
-        print("Task 6 logic")
-    elif task_id == "7":
-        # TODO
-        print("Task 7 logic")
+
     elif task_id == "8":
-        # TODO
-        print("Task 8 logic")
+        knn = []
+        alg = input("Enter algorithm to find nearest neighbours: LSH/VAFiles")
+        if alg == "VAFiles":
+            knn = va_files_execution(train_features, test_features)
+        elif alg == "LSH":
+            knn = lsh_executor(train_features,test_features)
+        else:
+            print("Invalid: Enter one of LSH/VAFiles")
+        execute_flow(train_features, test_features, knn)
