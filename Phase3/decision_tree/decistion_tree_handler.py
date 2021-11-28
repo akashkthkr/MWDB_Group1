@@ -1,14 +1,14 @@
 import numpy
-<<<<<<< HEAD
 import json
 from numpyencoder import NumpyEncoder
-from Phase3.decision_tree.decision_tree3 import DecisionTree
+from Phase3.decision_tree.decision_tree import DecisionTree
+from collections import defaultdict
 from Project.services.ImageFetchService import extract_subject_id_image_type_and_second_id
 from constants.Constants_Phase3 import OUTPUTS_PATH
 from sklearn import tree
-from Phase3.SVM.SVMUtilities import SVMUtilities
+from Phase3.decision_tree.utils import DTUtilities
 
-from decision_tree.decision_tree import DecisionTreeClassifier
+# from decision_tree.decision_tree import DecisionTreeClassifier
 from Project.services.ImageFetchService import extract_subject_id_image_type_and_second_id
 from sklearn import tree
 
@@ -33,16 +33,14 @@ class DecisionTreeHandler:
         negative_image_assosciation = {}
         clf = DecisionTree()
         count = 1
-        for original_type_id in self.get_labels():
-            print(original_type_id)
-            print(count)
+        for original_category_id in self.get_labels():
             count = count + 1
             training_image_ids, training_set_X, training_set_Y = [], [], []
             for image_id in self.train_data:
                 subject_id, type_id, second_id = extract_subject_id_image_type_and_second_id(image_id)
                 training_image_ids.append(image_id)
                 training_set_X.append(self.train_data[image_id])
-                if type_id == original_type_id:
+                if type_id == original_category_id:
                     training_set_Y.append(1)
                 else:
                     training_set_Y.append(0)
@@ -50,78 +48,74 @@ class DecisionTreeHandler:
             test_image_ids, test_set_X = [], []
 
             for image_id in self.test_data:
-                subject_id, type_id, second_id = extract_subject_id_image_type_and_second_id(image_id)
                 test_image_ids.append(image_id)
                 test_set_X.append(self.test_data[image_id])
             clf.fit(training_set_X, training_set_Y)
-            print("len::: {}   training settt XXX : {}".format(len(training_set_X), training_set_X))
-            print("len::: {}   training settt YYY: {}".format(len(training_set_Y), training_set_Y))
-            print("treeeee : {}".format(clf.tree))
             prediction_values = clf.predict(numpy.array(test_set_X))
-            print("prediction_values:::: {}".format(prediction_values))
             predictions = numpy.sign(prediction_values)
 
             index = 0
             for image_id in test_image_ids:
+                # print("image id::: {} original_category_id: {}".format(image_id, original_category_id))
                 if predictions[index] == 1:
-                    if original_type_id in image_id:
-                        if original_type_id in self.true_positives:
-                            self.true_positives[original_type_id].append(image_id)
+                    if original_category_id in image_id:
+                        if original_category_id in self.true_positives:
+                            self.true_positives[original_category_id].append(image_id)
                         else:
                             true_positive_list = [image_id]
                             if len(self.true_positives) == 0:
-                                self.true_positives = {original_type_id: true_positive_list}
+                                self.true_positives = {original_category_id: true_positive_list}
                             else:
-                                self.true_positives[original_type_id] = true_positive_list
+                                self.true_positives[original_category_id] = true_positive_list
                     else:
-                        if original_type_id in self.false_positives:
-                            self.false_positives[original_type_id].append(image_id)
+                        if original_category_id in self.false_positives:
+                            self.false_positives[original_category_id].append(image_id)
                         else:
                             false_positive_list = [image_id]
                             if len(self.false_positives) == 0:
-                                self.false_positives = {original_type_id: false_positive_list}
+                                self.false_positives = {original_category_id: false_positive_list}
                             else:
-                                self.false_positives[original_type_id] = false_positive_list
+                                self.false_positives[original_category_id] = false_positive_list
 
                     if image_id in images_assosciation:
-                        if any(original_type_id in type for type in images_assosciation[image_id]):
+                        if any(original_category_id in type for type in images_assosciation[image_id]):
                             for value in images_assosciation[image_id]:
-                                value[original_type_id] = max(value[original_type_id], prediction_values[index])
+                                value[original_category_id] = max(value[original_category_id], prediction_values[index])
                         else:
-                            y = {original_type_id: prediction_values[index]}
+                            y = {original_category_id: prediction_values[index]}
                             images_assosciation[image_id].append(y)
                     else:
-                        x = {original_type_id: prediction_values[index]}
+                        x = {original_category_id: prediction_values[index]}
                         images_assosciation[image_id] = [x]
                 else:
-                    if original_type_id in image_id:
-                        if original_type_id in self.false_negatives:
-                            self.false_negatives[original_type_id].append(image_id)
+                    if original_category_id in image_id:
+                        if original_category_id in self.false_negatives:
+                            self.false_negatives[original_category_id].append(image_id)
                         else:
                             false_negative_list = [image_id]
                             if len(self.false_negatives) == 0:
-                                self.false_negatives = {original_type_id: false_negative_list}
+                                self.false_negatives = {original_category_id: false_negative_list}
                             else:
-                                self.false_negatives[original_type_id] = false_negative_list
+                                self.false_negatives[original_category_id] = false_negative_list
                     else:
-                        if original_type_id in self.true_negatives:
-                            self.true_negatives[original_type_id].append(image_id)
+                        if original_category_id in self.true_negatives:
+                            self.true_negatives[original_category_id].append(image_id)
                         else:
                             true_negative_list = [image_id]
                             if len(self.true_negatives) == 0:
-                                self.true_negatives = {original_type_id: true_negative_list}
+                                self.true_negatives = {original_category_id: true_negative_list}
                             else:
-                                self.true_negatives[original_type_id] = true_negative_list
+                                self.true_negatives[original_category_id] = true_negative_list
 
                     if image_id in negative_image_assosciation:
-                        if any(original_type_id in type for type in negative_image_assosciation[image_id]):
+                        if any(original_category_id in type for type in negative_image_assosciation[image_id]):
                             for value in negative_image_assosciation[image_id]:
-                                value[original_type_id] = max(value[original_type_id], prediction_values[index])
+                                value[original_category_id] = max(value[original_category_id], prediction_values[index])
                         else:
-                            y = {original_type_id: prediction_values[index]}
+                            y = {original_category_id: prediction_values[index]}
                             negative_image_assosciation[image_id].append(y)
                     else:
-                        x = {original_type_id: prediction_values[index]}
+                        x = {original_category_id: prediction_values[index]}
                         negative_image_assosciation[image_id] = [x]
                 index = index + 1
 
@@ -161,12 +155,11 @@ class DecisionTreeHandler:
         jsonFile.write(jsonString)
         jsonFile.close()
 
-        svm_utilities = SVMUtilities(self.false_positives, self.true_positives, self.false_negatives,
+        dt_utils = DTUtilities(self.false_positives, self.true_positives, self.false_negatives,
                                      self.true_negatives, self.get_labels(), self.task_id)
-        svm_utilities.save_fp_misses_rate()
-        print(remaining_images)
-        pass
+        dt_utils.save_fp_misses_rate()
 
+    """
     def execute1(self):
         decision_tree_classifier = DecisionTree()
         # for image in self.train_data:
@@ -211,11 +204,12 @@ class DecisionTreeHandler:
         # resultss1 = clf.predict(numpy.array(train_data))
         # false_positivess1, misses = self.calculate_misses_and_false_positives(resultss1)
         # print("False Positivessss:::: {}".format(false_positivess1))
+    """
 
     def get_labels(self):
         if self.task_id == "1":
-            return {"cc", "con", "emboss", "jitter", "neg", "noise01", "noise02", "original", "poster", "rot",
-                    "smooth", "stipple"}
+            return ["cc", "con", "emboss", "jitter", "neg", "noise01", "noise02", "original", "poster", "rot",
+                    "smooth", "stipple"]
         elif self.task_id == "2":
             return set([i for i in range(1, 41, 1)])
         elif self.task_id == "3":
