@@ -1,10 +1,7 @@
 import json
 import time
 import numpy as np
-
 from sklearn.metrics.pairwise import cosine_similarity
-from numpyencoder import NumpyEncoder
-
 from constants.Constants_Phase3 import OUTPUTS_PATH
 
 
@@ -149,7 +146,7 @@ def classify_by_X(image_lab, image_unlab, feat_lab, feat_unlab):
             temp.items(), key=lambda item: item[1])}
         ranks[x] = temp
 
-    with open(OUTPUTS_PATH + "PPR_task1_ranks.json", "w") as file:
+    with open(OUTPUTS_PATH + "ppr_task1_ranks.json", "w") as file:
         jsonString = json.dumps(ranks)
         file.write(jsonString)
 
@@ -158,15 +155,12 @@ def classify_by_X(image_lab, image_unlab, feat_lab, feat_unlab):
         temp = list(ranks[img].items())[0][0]
         labels[img] = temp
 
-    # print(labels)
-    with open(OUTPUTS_PATH + "PPR_task1_results.json", "w") as file:
+    with open(OUTPUTS_PATH + "ppr_task1_results.json", "w") as file:
         jsonString = json.dumps(labels)
         file.write(jsonString)
     print("Classification complete.")
 
     fp, fn, tp, tn = {}, {}, {}, {k: [] for k in list(labelled.keys())}
-
-    print(labels)
 
     for i in labels:
         label = i.split("-")[1]
@@ -214,6 +208,11 @@ def classify_by_X(image_lab, image_unlab, feat_lab, feat_unlab):
     with open(OUTPUTS_PATH + "ppr_task1_fnr.json", "w") as file:
         jsonString = json.dumps(fnr)
         file.write(jsonString)
+
+    print("Results: ", labels)
+    print("False Positive Rates: ", fpr)
+    print("Miss Rates: ", fnr)
+    print("Files generated in outputs directory.")
 
 
 def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
@@ -266,15 +265,12 @@ def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
         temp = list(ranks[img].items())[0][0]
         labels[img] = temp
 
-    # print(labels)
     with open(OUTPUTS_PATH + "PPR_task2_results.json", "w") as file:
         jsonString = json.dumps(labels)
         file.write(jsonString)
     print("Classification complete.")
 
     fp, fn, tp, tn = {}, {}, {}, {k: [] for k in list(labelled.keys())}
-
-    print(labels)
 
     for i in labels:
         label = i.split("-")[2]
@@ -322,6 +318,11 @@ def classify_by_Y(image_lab, image_unlab, feat_lab, feat_unlab):
     with open(OUTPUTS_PATH + "ppr_task2_fnr.json", "w") as file:
         jsonString = json.dumps(fnr)
         file.write(jsonString)
+
+    print("Results: ", labels)
+    print("False Positive Rates: ", fpr)
+    print("Miss Rates: ", fnr)
+    print("Files generated in outputs directory.")
 
 
 def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
@@ -374,15 +375,12 @@ def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
         temp = list(ranks[img].items())[0][0]
         labels[img] = temp
 
-    # print(labels)
     with open(OUTPUTS_PATH + "PPR_task3_results.json", "w") as file:
         jsonString = json.dumps(labels)
         file.write(jsonString)
     print("Classification complete.")
 
     fp, fn, tp, tn = {}, {}, {}, {k: [] for k in list(labelled.keys())}
-
-    print(labels)
 
     for i in labels:
         label = i.split("-")[3]
@@ -431,20 +429,18 @@ def classify_by_Z(image_lab, image_unlab, feat_lab, feat_unlab):
         jsonString = json.dumps(fnr)
         file.write(jsonString)
 
+    print("Results: ", labels)
+    print("False Positive Rates: ", fpr)
+    print("Miss Rates: ", fnr)
+    print("Files generated in outputs directory.")
+
 
 def classify_using_ppr(task_id, train_features, test_features):
-    start = time.time()
-
-    # print(len(train_features))
-    # print(len(test_features))
-
     image_lab = list(train_features.keys())
     image_unlab = list(test_features.keys())
 
     features_lab = list(train_features.values())
     features_unlab = list(test_features.values())
-
-    # print(type(features_lab))
 
     if (task_id == '1'):
         classify_by_X(image_lab, image_unlab, features_lab, features_unlab)
@@ -452,5 +448,3 @@ def classify_using_ppr(task_id, train_features, test_features):
         classify_by_Y(image_lab, image_unlab, features_lab, features_unlab)
     elif (task_id == '3'):
         classify_by_Z(image_lab, image_unlab, features_lab, features_unlab)
-
-    print("Total time taken - " + str(time.time() - start) + " seconds.")
