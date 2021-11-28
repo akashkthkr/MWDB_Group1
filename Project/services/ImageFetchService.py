@@ -188,9 +188,12 @@ def extract_subject_id_and_image_id(image_id, X):
 
 
 def extract_subject_id_image_type_and_second_id(image_id):
-    first_index = image_id.index("-") + 1
-    second_index = first_index + image_id[first_index:].index("-")
-    third_index = second_index + 1 + image_id[second_index + 1:].index("-")
+    identifier = "-"
+    if "_" in image_id:
+        identifier = "_"
+    first_index = image_id.index(identifier) + 1
+    second_index = first_index + image_id[first_index:].index(identifier)
+    third_index = second_index + 1 + image_id[second_index + 1:].index(identifier)
     fourth_index = third_index + 1
     return image_id[second_index + 1: third_index], image_id[first_index: second_index], image_id[fourth_index:]
 
