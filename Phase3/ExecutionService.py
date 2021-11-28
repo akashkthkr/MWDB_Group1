@@ -40,7 +40,9 @@ def execute_tasks(task_id, train_features, test_features, classifier):
         if alg == "VAFiles":
             knn = va_files_execution(train_features, test_features)
         elif alg == "LSH":
-            knn = lsh_executor(train_features,test_features)
+            knn_dist = lsh_executor(train_features,test_features)
+            for id,_ in knn_dist:
+                knn.append(id)
         else:
             print("Invalid: Enter one of LSH/VAFiles")
         execute_flow(train_features, test_features, knn)
