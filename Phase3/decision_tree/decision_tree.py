@@ -1,4 +1,6 @@
 import copy
+
+
 class DecisionTree(object):
 
     def __init__(self):
@@ -104,7 +106,6 @@ class DecisionTree(object):
         root = self.get_best_split(train)
         self.split(root, 1)
         return root
-
 
     def predict(self, test):
         predictions = list()
