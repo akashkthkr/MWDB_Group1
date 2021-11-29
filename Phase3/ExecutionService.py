@@ -1,6 +1,8 @@
 from Phase3.Lsh_executor import lsh_executor
 from Phase3.SVM.SVMExecution import SVMExecution
 from Phase3.decision_tree.decistion_tree_handler import DecisionTreeHandler
+from Phase3.decision_tree.dt_task_2 import DecisionTreeHandler2
+from Phase3.decision_tree.dt_task_3 import DecisionTreeHandler3
 from Phase3.vafiles import va_files_execution
 from pprc import  classify_using_ppr
 from Phase3.Feedback_IP import execute_flow
@@ -15,7 +17,12 @@ def execute_tasks(task_id, train_features, test_features, classifier):
 
     elif classifier == "DT":
         print("Decision Tree to be executed")
-        decisionTreeHandler = DecisionTreeHandler(task_id, train_features, test_features)
+        if task_id == "1":
+            decisionTreeHandler = DecisionTreeHandler(task_id, train_features, test_features)
+        elif task_id == "2":
+            decisionTreeHandler = DecisionTreeHandler2(task_id, train_features, test_features)
+        elif task_id == "3":
+            decisionTreeHandler = DecisionTreeHandler3(task_id, train_features, test_features)
         decisionTreeHandler.execute()
         print("Done")
     elif classifier == "PPR":
