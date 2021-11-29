@@ -43,10 +43,7 @@ False positive and miss rates
 '''
 
 import json
-import pickle
-from pathlib import Path
 from constants.Constants_Phase3 import OUTPUTS_PATH
-import os
 import numpy as np
 
 
@@ -77,7 +74,17 @@ class Lsh(object):
             layer.setdefault(self.get_combined_hash_value(self.random_planes[i], input_feature), []).append(
                 (value, image_id))
 
+    def size_of_lsh_structure_created(self):
+        size_lay = 0
+        for layer in self.layers:
+            size_lay += layer.__sizeof__()
+        size_rand_plane = 0
+        for layer in self.random_planes:
+            size_rand_plane += layer.__sizeof__()
+        return (size_lay + size_rand_plane)
+
     def query(self, feature, num_results=None):
+        size_of_index_structure = self.size_of_lsh_structure_created()
         image_hits = set()
         calculate_distance = euclidean_dist_square
         buckets = set()
@@ -98,16 +105,14 @@ class Lsh(object):
         image_hits.sort(key=lambda v: v[1])
 
         result = image_hits[:num_results] if num_results else image_hits
-        return result, len(image_hits), len(set(image_hits)), len(buckets)
+        self.save_result(result)
+        return result, len(image_hits), len(set(image_hits)), len(buckets), size_of_index_structure
 
     def save_to_json(self, filename, object_to_store):
         with open(filename, 'w') as json_file:
             json.dump(object_to_store, json_file)
 
-    def save_to_pickle(self, filename, object_to_store):
-        with open(filename, 'wb') as pickle_file:
-            pickle.dump(object_to_store, pickle_file)
-
     def save_result(self, result):
-        output_folder = OUTPUTS_PATH
-        self.save_to_json(output_folder + "lsh_data.json", result)
+        output_filename = "lsh_" + str(self.num_layers) + "_" + str(self.number_of_hashes_per_layer) + ".json"
+        output_folder_path = OUTPUTS_PATH + output_filename
+        self.save_to_json(output_folder_path, result)
