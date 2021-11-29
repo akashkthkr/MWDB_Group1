@@ -36,8 +36,9 @@ def lsh_executor(train_features, test_features):
 
     query_vector = np.array(query_vector[0])
 
-    ret_result, overall_image_considered, unique_img, bucket_size = lsh.query(feature=query_vector, num_results=t)
+    ret_result, overall_image_considered, unique_img, bucket_size, size_of_index_structure = lsh.query(feature=query_vector, num_results=t)
     print(colored("Query Image:" + str(query_ids[0]), 'green'))
+    print(colored("Size of the index structure created=" + str(size_of_index_structure), 'green'))
     print(colored("No of buckets Searched=" + str(bucket_size), 'green'))
     print(colored("Total no of images considered=" + str(overall_image_considered), 'green'))
     print(colored("Unique Images considered=" + str(unique_img), 'green'))
