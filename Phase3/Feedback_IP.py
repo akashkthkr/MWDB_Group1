@@ -1,13 +1,16 @@
+import numpy as np
+
 import Phase3.Feedback as Feedback
-from Phase3.SVM.SVM import SupportVectorMachine
+from Phase3.SVM.SVM import SupportVectorMachine,gaussian_kernel
 from Phase3.decision_tree import decision_tree
+from Project.services.ResultSubmission import  write_result
 import collections
 
 def execute_flow(ip_features,query_feature,result_ids):
-    r = int(input('Number of images  to label as relevant:'))
-    ir = int(input('Number of images to label as irrelevant:'))
+
     k = len(result_ids)
-    print(k)
+    #path = "C:\\Users\\saiac\\Documents\\MWDB-Phase3\\MWDB_Group1\\inputs\\100\\"
+    #write_result(path,result_ids)
     fb = Feedback.Feedback()
     base_img = []
     for query_id in query_feature:
@@ -22,6 +25,17 @@ def execute_flow(ip_features,query_feature,result_ids):
         print(count, image_id)
         rorir_map[num_image[count]] = -2
         count += 1
+
+    r = int(input('Number of images  to label as relevant:'))
+    ir = int(input('Number of images to label as irrelevant:'))
+
+   # if r == 0:
+   #     print("Edge case:Peforming unweighted knn since there are no relevant images in the results")
+   #     #features = [feature for _,feature in ip_features.items()]
+   #     knn_total = {image_id:fb.euclidean_distance(base_img, ip_features[image_id]) for
+   #                           image_id,_ in ip_features.items()}
+   #     fb.save_result(knn_total)
+   #     return
 
     while r > 0:
         ind = int(input('Enter the image id to label as Relevant:'))
@@ -43,19 +57,29 @@ def execute_flow(ip_features,query_feature,result_ids):
     if classifier == 'DT':
     # TODO: use generated input data and relabel the images
         print("Classify entire database with relevant/irrelevant feedback")
-        dt = decision_tree.DecisionTreeClassifier()
-        X_list = list(fb.X)
-        dt.fit(X_list,Y)
-        for id,feature in ip_features:
-            Labelled_Dataset[id] = dt.predict(feature)
+        dt = decision_tree.DecisionTree()
+        X_list = fb.X.tolist()
+        dt.fit(X_list,fb.Y)
+        features = []
+        ids = []
+        for id,feature in ip_features.items():
+            features.append(feature)
+            ids.append(id)
+        predicted_labels = dt.predict(features)
+        Labelled_Dataset = {ids[i]:predicted_labels[i] for i in range(len(ids))}
 
 
     elif classifier == 'SVM':
         print("Classify entire database with relevant/irrelevant feedback")
-        Svm = SupportVectorMachine()
+        Svm = SupportVectorMachine(gaussian_kernel, C=500)
         Svm.fit(fb.X,fb.Y)
-        for id,feature in ip_features.items():
-            Labelled_Dataset[id] = Svm.predict(feature)
+        features = []
+        ids = []
+        for id, feature in ip_features.items():
+            features.append(feature)
+            ids.append(id)
+        predicted_labels = Svm.predict(features)
+        Labelled_Dataset = {ids[i]: predicted_labels[i] for i in range(len(ids))}
 
 
 
@@ -76,9 +100,14 @@ def execute_flow(ip_features,query_feature,result_ids):
 
     #Ordered dict
     result = collections.OrderedDict()
+    resultids = []
     for val in new_ordered_images[:k]:
         result[val[0]] = val[1]
         print(val[0],val[1])
+        resultids.append(val[0])
+
+
+    #write_result(path,resultids)
 
     #TODO:Save Result
     fb.save_result(result)
