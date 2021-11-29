@@ -43,10 +43,11 @@ class SVMUtilities():
             # else:
             #     tn_count = 0
 
-            if fp_count == 0:
+            tn_count = float(len(self.features)) - tp_count - fp_count - fn_count
+            if fp_count == 0 and tn_count == 0:
                 self.false_positive_rate[tag_id] = 0
             else:
-                self.false_positive_rate[tag_id] = fp_count/(float(len(self.features)))
+                self.false_positive_rate[tag_id] = fp_count/(float(fp_count + tn_count))
 
 
             if fn_count == 0 and tp_count == 0:
