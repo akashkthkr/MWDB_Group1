@@ -80,11 +80,11 @@ class Lsh(object):
     def query(self, feature, num_results=None):
         image_hits = set()
         calculate_distance = euclidean_dist_square
-
+        buckets = set()
         for i, layer in enumerate(self.layers):
             combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature)
+            buckets.add(combined_hash_value)
             image_hits.update(layer.get(combined_hash_value, []))
-        j = 1
 
         while len(image_hits) < num_results:
             for i, layer in enumerate(self.layers):
@@ -92,14 +92,13 @@ class Lsh(object):
                 image_hits.update(layer.get(combined_hash_value, []))
                 combined_hash_value = self.get_combined_hash_value(self.random_planes[i], feature)
                 image_hits.update(layer.get(combined_hash_value, []))
-            j += 1
 
         image_hits = [(hit_tuple[1], calculate_distance(feature, np.asarray(hit_tuple[0])))
                       for hit_tuple in image_hits]
         image_hits.sort(key=lambda v: v[1])
 
         result = image_hits[:num_results] if num_results else image_hits
-        return result, len(image_hits), len(set(image_hits))
+        return result, len(image_hits), len(set(image_hits)), len(buckets)
 
     def save_to_json(self, filename, object_to_store):
         with open(filename, 'w') as json_file:
