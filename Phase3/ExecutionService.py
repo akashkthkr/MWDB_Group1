@@ -1,3 +1,5 @@
+import numpy
+
 from Phase3.Lsh_executor import lsh_executor
 from Phase3.SVM.SVMExecution import SVMExecution
 from Phase3.decision_tree.decistion_tree_handler import DecisionTreeHandler
@@ -17,12 +19,21 @@ def execute_tasks(task_id, train_features, test_features, classifier):
 
     elif classifier == "DT":
         print("Decision Tree to be executed")
+        for image_id in train_features:
+            if type(train_features[image_id]) == numpy.ndarray:
+                train_features[image_id] = train_features[image_id].tolist()
+
+        for image_id in test_features:
+            if type(test_features[image_id]) == numpy.ndarray:
+                test_features[image_id] = test_features[image_id].tolist()
+
         if task_id == "1":
             decisionTreeHandler = DecisionTreeHandler(task_id, train_features, test_features)
         elif task_id == "2":
             decisionTreeHandler = DecisionTreeHandler2(task_id, train_features, test_features)
         elif task_id == "3":
             decisionTreeHandler = DecisionTreeHandler3(task_id, train_features, test_features)
+
         decisionTreeHandler.execute()
         print("Done")
     elif classifier == "PPR":
@@ -47,7 +58,9 @@ def execute_tasks(task_id, train_features, test_features, classifier):
         if alg == "VAFiles":
             knn = va_files_execution(train_features, test_features)
         elif alg == "LSH":
-            knn = lsh_executor(train_features,test_features)
+            knn_dist = lsh_executor(train_features,test_features)
+            for id,_ in knn_dist:
+                knn.append(id)
         else:
             print("Invalid: Enter one of LSH/VAFiles")
         execute_flow(train_features, test_features, knn)
